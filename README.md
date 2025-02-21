@@ -1,17 +1,16 @@
 # events-sample-node
  
 1. Getting started:  
-    1. Using Google Cloud Shell (the simplest option):  
+    1. Using the deployment server:  
         prerequisites: node and npm  
-        these are available inside Google Cloud Shell.  
+        these should be installed from a previous lab.  
         1. open two separate terminal sessions:  
-            * check that your Project Id is shown in yellow/gold in parentheses.
             * in one terminal **cd sample-master/internal**  
             * in the other terminal **cd sample-master/external**  
         1. run **npm install** in each terminal
         1. run **node server.js** in the *internal* terminal
         1. run **npm start** in the *external* terminal
-        1. click on the "preview" button of your Cloud Shell.
+        1. Open a browser and navigate to http://localhost:8080
     1. Using Your own machine (Windows users, see note at bottom this file):  
         prerequisites: node and npm  
         1. open two separate terminal sessions:  
