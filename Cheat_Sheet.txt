@@ -1,0 +1,20 @@
+# Docker Commands
+
+# To build the images (Run from the internal and exeternal folders)
+docker build -t [docker-id]/events-external:v1.0 .
+docker build -t [docker-id]/events-internal:v1.0 .
+
+# To run the containers
+docker run -p 8080:8080 [docker-id]/events-external:v1.0
+docker run -p 8082:8082 [docker-id]/events-internal:v1.0
+
+# Push images to Docker Hub
+docker push [docker-id]/events-external:v1.0
+docker push [docker-id]/events-internal:v1.0
+
+# To deploy the Kibernetes config (Run from the kubernetes folder)
+kubectl apply -f ./
+
+
+# To delete the Kibernetes config (Run from the kubernetes folder)
+kubectl delete -f ./
