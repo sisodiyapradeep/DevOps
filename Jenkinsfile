@@ -113,6 +113,7 @@ pipeline {
             }
         }
         stage('Remove local docker image') {
+            steps {
                 sh "sudo docker rmi $EXTERNAL_IMAGE:latest || true"
                 sh "sudo docker rmi $EXTERNAL_IMAGE:$BUILD_NUMBER || true"
                 sh "sudo docker rmi $INTERNAL_IMAGE:latest || true"
