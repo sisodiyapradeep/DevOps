@@ -54,16 +54,18 @@ pipeline {
                 echo 'Retrieve source from github. run npm install and npm test' 
             }
         }
-        stage('Building Internal Dokcer image') {
-            steps{
+        stage('Building Internal Docker image') {
+            steps {
                 dir('internal') {
                     script {
                         echo 'build the internal image' 
                         sh "docker build -t $INTERNAL_IMAGE ."
                     }
                 }
+            }
+        }
         stage('Building External Docker image') {
-            steps{
+            steps {
                 dir('external') {
                     script {
                         echo 'build the external image' 
@@ -75,6 +77,7 @@ pipeline {
                     sh "docker tag $INTERNAL_IMAGE $INTERNAL_IMAGE:$BUILD_NUMBER"
                     sh "docker tag $EXTERNAL_IMAGE $EXTERNAL_IMAGE:$BUILD_NUMBER"
                 }
+            }
         }
         stage('Push Docker Images to ECR Registry') {
             steps {
@@ -85,12 +88,7 @@ pipeline {
                     sh "docker push $EXTERNAL_IMAGE"
                 }
             }
-            steps{
-                script {
-                    echo 'push the image to docker hub' 
-                }
-            }
-        }     
+        }
         stage('deploy to k8s') {
             agent {
                 docker { 
@@ -112,11 +110,13 @@ pipeline {
                     kubectl apply -f external-service.yaml
                 '''
             }
-        }     
+        }
         stage('Remove local docker image') {
-            steps{
-                sh "docker rmi $imageName:latest"
-                sh "docker rmi $imageName:$BUILD_NUMBER"
+            steps {
+                sh "docker rmi $EXTERNAL_IMAGE:latest || true"
+                sh "docker rmi $EXTERNAL_IMAGE:$BUILD_NUMBER || true"
+                sh "docker rmi $INTERNAL_IMAGE:latest || true"
+                sh "docker rmi $INTERNAL_IMAGE:$BUILD_NUMBER || true"
             }
         }
     }
