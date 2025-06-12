@@ -2,7 +2,8 @@ pipeline {
     agent any 
     environment {
         registryCredential = 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 933199133172.dkr.ecr.us-east-1.amazonaws.com'
-        imageName = '933199133172.dkr.ecr.us-east-1.amazonaws.com/external:latest'
+        EXTERNAL_IMAGE = '933199133172.dkr.ecr.us-east-1.amazonaws.com/external:latest'
+        INTERNAL_IMAGE = '933199133172.dkr.ecr.us-east-1.amazonaws.com/internal:latest'
         dockerImage = ''
         AWS_REGION = 'us-east-1'
         EKS_CLUSTER_NAME = 'devops'
@@ -53,14 +54,37 @@ pipeline {
                 echo 'Retrieve source from github. run npm install and npm test' 
             }
         }
-        stage('Building image') {
+        stage('Building Internal Dokcer image') {
             steps{
+                dir('internal') {
+                    script {
+                        echo 'build the internal image' 
+                        sh "docker build -t $INTERNAL_IMAGE ."
+                    }
+                }
+        stage('Building External Docker image') {
+            steps{
+                dir('external') {
+                    script {
+                        echo 'build the external image' 
+                        sh "docker build -t $EXTERNAL_IMAGE ."
+                    }
+                }
                 script {
-                    echo 'build the image' 
+                    echo 'Tagging the images with build number'
+                    sh "docker tag $INTERNAL_IMAGE $INTERNAL_IMAGE:$BUILD_NUMBER"
+                    sh "docker tag $EXTERNAL_IMAGE $EXTERNAL_IMAGE:$BUILD_NUMBER"
+                }
+        }
+        stage('Push Docker Images to ECR Registry') {
+            steps {
+                script {
+                    echo 'Pushing internal image to ECR'
+                    sh "docker push $INTERNAL_IMAGE"
+                    echo 'Pushing external image to ECR'
+                    sh "docker push $EXTERNAL_IMAGE"
                 }
             }
-        }
-        stage('Push Image') {
             steps{
                 script {
                     echo 'push the image to docker hub' 
