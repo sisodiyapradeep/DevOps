@@ -6,7 +6,8 @@ pipeline {
         INTERNAL_IMAGE = '933199133172.dkr.ecr.us-east-1.amazonaws.com/internal:latest'
         dockerImage = ''
         AWS_REGION = 'us-east-1'
-        EKS_CLUSTER_NAME = 'devops'
+        CLUSTER_NAME = 'devops'
+        NAMESPACE = 'devops'
     }
     stages {
         stage('Building Internal Docker image') {
@@ -36,31 +37,30 @@ pipeline {
             }
         }
         stage('deploy to k8s') {
-            agent {
-                docker { 
-                    image 'amazon/aws-cli:2.15.41'
-                    args '-e HOME=/tmp'
-                    reuseNode true
+            steps {
+                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
+                    sh '''
+                        aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
+                        kubectl get nodes
+                        kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
+                        kubectl config set-context --current --namespace=$NAMESPACE
+                        kubectl apply -f internal-deployment.yaml
+                        kubectl apply -f external-deployment.yaml
+                        kubectl apply -f internal-service.yaml
+                        kubectl apply -f external-service.yaml
+                    '''
                 }
             }
-            steps {
-                echo 'Deploying to AWS EKS cluster'
-                sh '''
-                    # Configure AWS CLI
-                    aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
-
-                    # Deploy to EKS using kubectl
-                    kubectl apply -f internal-deployment.yaml
-                    kubectl apply -f external-deployment.yaml
-                    kubectl apply -f internal-service.yaml
-                    kubectl apply -f external-service.yaml
-                '''
-            }
         }
-        stage('Remove local docker image') {
+        stage('Test Deployment') {
             steps {
-                sh "sudo docker rmi $EXTERNAL_IMAGE:latest || true"
-                sh "sudo docker rmi $INTERNAL_IMAGE:latest || true"
+                script {
+                    sh '''
+                        kubectl rollout status deployment/internal-deployment
+                        kubectl rollout status deployment/external-deployment
+                        kubectl get pods
+                    '''
+                }
             }
         }
     }
