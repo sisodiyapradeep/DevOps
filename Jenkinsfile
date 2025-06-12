@@ -45,6 +45,7 @@ pipeline {
             steps {
                 withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
                     sh '''
+                        aws sts get-caller-identity
                         aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
                         kubectl get nodes
                         kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
